@@ -5,7 +5,7 @@ Home: https://gn.googlesource.com/gn/
 
 Package license: BSD-3-Clause
 
-Feedstock license: BSD 3-Clause
+Feedstock license: BSD-3-Clause
 
 Summary: GN is a meta-build system that generates build files for Ninja.
 
