@@ -3,7 +3,7 @@
 # notation.
 
 {% set name = "gn" %}
-{% set version = "0.0.20190712172645" %}
+{% set version = "0.0.20200320191924" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ package:
 source:
   # We have to use git as the source as the provided tarballs are not stable.
   git_url: https://gn.googlesource.com/gn
-  git_rev: 579b5b394094db3a07c46c3ee459860bd5619224
+  git_rev: 5ed3c9cc67b090d5e311e4bd2aba072173e82db9
   patches:
     - add-lrt.patch  # [linux]
 
