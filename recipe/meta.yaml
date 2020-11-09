@@ -14,7 +14,7 @@ source:
   git_url: https://gn.googlesource.com/gn
   git_rev: e002e68a48d1c82648eadde2f6aafa20d08c36f2
   patches:
-    - add-lrt.patch  # [linux]
+    - add-lrt.patch
 
 build:
   number: 2
