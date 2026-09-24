@@ -1,0 +1,47 @@
+# As there are no releases in GN, we build the latest tag from time to time.
+# The version is the time of the latest master commit in YYYYMMDDHHMMSS
+# notation.
+
+context:
+  version: "0.0.20250416202228"
+
+package:
+  name: gn
+  version: ${{ version }}
+
+source:
+  # We have to use git as the source as the provided tarballs are not stable.
+  - git: https://gn.googlesource.com/gn
+    rev: 10a27145cd0770b78745ff536e343bf12c70f6c3
+    patches:
+      # No-op outside of MSVC on ARM64, so it is applied on every platform.
+      - win-arm64.patch
+      # - add-lrt.patch
+
+build:
+  number: 1
+
+requirements:
+  build:
+    - ${{ compiler('c') }}
+    - ${{ stdlib('c') }}
+    - ${{ compiler('cxx') }}
+    # python is only used to run build/gen.py, so pin it loosely to keep it
+    # out of the variant matrix.
+    - python >=3.9
+    - ninja
+
+tests:
+  - package_contents:
+      bin:
+        - gn
+
+about:
+  homepage: https://gn.googlesource.com/gn/
+  license: BSD-3-Clause
+  license_file: LICENSE
+  summary: GN is a meta-build system that generates build files for Ninja.
+
+extra:
+  recipe-maintainers:
+    - xhochy

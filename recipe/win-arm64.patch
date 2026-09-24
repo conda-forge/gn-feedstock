@@ -1,0 +1,62 @@
+Support building natively for win-arm64.
+
+Two MSVC assumptions in the build break on ARM64:
+
+* build_config.h detects ARM64 only via __aarch64__, which MSVC does not
+  define -- it uses _M_ARM64 -- so the architecture detection falls through
+  to "#error Please add support for your architecture in build_config.h".
+* build/gen.py hardcodes /MACHINE:x64 when linking with link.exe, which then
+  fails with "LNK1112: module machine type 'ARM64' conflicts with target
+  machine type 'x64'". Derive the value from the architecture vcvarsall.bat
+  was initialized for instead, falling back to the machine running the script.
+
+Both changes are no-ops on the previously supported platforms. As of gn main
+neither is handled upstream.
+
+diff --git a/build/gen.py b/build/gen.py
+index 5d07459..1b55c0f 100644
+--- a/build/gen.py
++++ b/build/gen.py
+@@ -399,6 +399,20 @@ def WriteGenericNinja(path, static_libraries, executables,
+       subprocess.run(
+           ['ninja', '-C', build_dir, '-t', 'compdb'], stdout=f, check=True)
+ 
++def MSVCMachine():
++  """Returns the /MACHINE value matching the active MSVC toolchain."""
++  # vcvarsall.bat exports the architecture it was initialized for; fall back to
++  # the machine running this script for a plain native build.
++  arch = os.environ.get('VSCMD_ARG_TGT_ARCH') or platform.machine()
++  return {
++      'amd64': 'x64',
++      'arm64': 'arm64',
++      'arm64ec': 'arm64ec',
++      'x64': 'x64',
++      'x86': 'x86',
++      'x86_64': 'x64',
++  }.get(arch.lower(), arch.lower())
++
+ def WriteGNNinja(path, platform, host, options, args_list):
+   if platform.is_msvc():
+     cxx = os.environ.get('CXX', 'cl.exe')
+@@ -605,7 +619,7 @@ def WriteGNNinja(path, platform, host, options, args_list):
+ 
+     win_manifest = os.path.relpath(
+       os.path.join(REPO_ROOT, "build/windows.manifest.xml"), options.out_path)
+-    ldflags.extend(['/DEBUG', '/MACHINE:x64', '/MANIFEST:EMBED',
++    ldflags.extend(['/DEBUG', '/MACHINE:' + MSVCMachine(), '/MANIFEST:EMBED',
+                     f'/MANIFESTINPUT:{win_manifest}'])
+ 
+   static_libraries = {
+diff --git a/src/util/build_config.h b/src/util/build_config.h
+index 52c4f21..458fb26 100644
+--- a/src/util/build_config.h
++++ b/src/util/build_config.h
+@@ -135,7 +135,7 @@
+ #define ARCH_CPU_ARMEL 1
+ #define ARCH_CPU_32_BITS 1
+ #define ARCH_CPU_LITTLE_ENDIAN 1
+-#elif defined(__aarch64__)
++#elif defined(_M_ARM64) || defined(__aarch64__)
+ #define ARCH_CPU_ARM_FAMILY 1
+ #define ARCH_CPU_ARM64 1
+ #define ARCH_CPU_64_BITS 1
