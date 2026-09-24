@@ -1,0 +1,10 @@
+# The smallest project "gn gen" accepts: a toolchain with the one tool a group
+# needs, and a single target to generate.
+toolchain("tc") {
+  tool("stamp") {
+    command = "stamp {{output}}"
+  }
+}
+
+group("default") {
+}
