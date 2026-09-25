@@ -19,7 +19,7 @@ source:
       # - add-lrt.patch
 
 build:
-  number: 1
+  number: 2
 
 requirements:
   build:
@@ -35,6 +35,20 @@ tests:
   - package_contents:
       bin:
         - gn
+  # "gn --version" does not look at the host architecture, so it kept passing on
+  # win-arm64 while every real invocation aborted. Generate an actual project so
+  # the host CPU detection is exercised, and print host_cpu so a wrong (but
+  # non-fatal) answer is visible in the log too.
+  - script:
+      - gn --version
+      - cd test-project
+      - gn gen out
+      - gn args out --list=host_cpu --short
+    files:
+      recipe:
+        - test-project/.gn
+        - test-project/BUILD.gn
+        - test-project/BUILDCONFIG.gn
 
 about:
   homepage: https://gn.googlesource.com/gn/

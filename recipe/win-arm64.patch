@@ -1,6 +1,6 @@
-Support building natively for win-arm64.
+Support building and running natively for win-arm64.
 
-Two MSVC assumptions in the build break on ARM64:
+Three MSVC/ARM64 assumptions in the build and in GN itself break on ARM64:
 
 * build_config.h detects ARM64 only via __aarch64__, which MSVC does not
   define -- it uses _M_ARM64 -- so the architecture detection falls through
@@ -9,12 +9,18 @@ Two MSVC assumptions in the build break on ARM64:
   fails with "LNK1112: module machine type 'ARM64' conflicts with target
   machine type 'x64'". Derive the value from the architecture vcvarsall.bat
   was initialized for instead, falling back to the machine running the script.
+* OperatingSystemArchitecture() maps only INTEL/AMD64/IA64 and returns an
+  empty string for PROCESSOR_ARCHITECTURE_ARM64. That empty string reaches
+  Args::GetHostCpu(), which ends in CHECK(false) << "OS architecture not
+  handled.", so an ARM64 gn.exe aborts on every "gn gen" even though it built
+  and reports its version fine. GetHostCpu() already maps "arm64", so
+  returning it is all that is needed.
 
-Both changes are no-ops on the previously supported platforms. As of gn main
-neither is handled upstream.
+All three changes are no-ops on the previously supported platforms. As of gn
+main none of them is handled upstream.
 
 diff --git a/build/gen.py b/build/gen.py
-index 5d07459..1b55c0f 100644
+index 5d074599..1b55c0f6 100755
 --- a/build/gen.py
 +++ b/build/gen.py
 @@ -399,6 +399,20 @@ def WriteGenericNinja(path, static_libraries, executables,
@@ -48,7 +54,7 @@ index 5d07459..1b55c0f 100644
  
    static_libraries = {
 diff --git a/src/util/build_config.h b/src/util/build_config.h
-index 52c4f21..458fb26 100644
+index 52c4f210..458fb265 100644
 --- a/src/util/build_config.h
 +++ b/src/util/build_config.h
 @@ -135,7 +135,7 @@
@@ -60,3 +66,16 @@ index 52c4f21..458fb26 100644
  #define ARCH_CPU_ARM_FAMILY 1
  #define ARCH_CPU_ARM64 1
  #define ARCH_CPU_64_BITS 1
+diff --git a/src/util/sys_info.cc b/src/util/sys_info.cc
+index cc75c45b..9de779ec 100644
+--- a/src/util/sys_info.cc
++++ b/src/util/sys_info.cc
+@@ -90,6 +90,8 @@ std::string OperatingSystemArchitecture() {
+       return "x86_64";
+     case PROCESSOR_ARCHITECTURE_IA64:
+       return "ia64";
++    case PROCESSOR_ARCHITECTURE_ARM64:
++      return "arm64";
+   }
+   return std::string();
+ #else
