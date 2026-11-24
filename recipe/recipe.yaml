@@ -3,7 +3,7 @@
 # notation.
 
 context:
-  version: "0.0.20250416202228"
+  version: "0.0.20261028191142"
 
 package:
   name: gn
@@ -12,14 +12,14 @@ package:
 source:
   # We have to use git as the source as the provided tarballs are not stable.
   - git: https://gn.googlesource.com/gn
-    rev: 10a27145cd0770b78745ff536e343bf12c70f6c3
+    rev: 98f6dd2be85d0eba8f31ee3ad1def5402383cff3
     patches:
       # No-op outside of MSVC on ARM64, so it is applied on every platform.
       - win-arm64.patch
       # - add-lrt.patch
 
 build:
-  number: 2
+  number: 0
 
 requirements:
   build:
